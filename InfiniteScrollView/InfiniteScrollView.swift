@@ -8,6 +8,77 @@
 
 import UIKit
 
+class InfiniteScrollViewWithPageControll: UIView, UIScrollViewDelegate {
+    
+    let infiniteScrollView = InfiniteScrollView(frame: CGRectZero)
+    let pageControl = UIPageControl(frame: CGRectZero)
+    var dataSource: InfiniteScrollViewDelegate? {
+        didSet {
+            infiniteScrollView.dataSource = dataSource
+            reloadData()
+        }
+    }
+    
+    required init(coder aDecoder: NSCoder) {
+        super.init(coder: aDecoder)
+        
+        baseConfiguration()
+    }
+    
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        
+        baseConfiguration()
+    }
+    
+    func baseConfiguration() {
+        // scroll view
+        infiniteScrollView.delegate = self
+        addSubview(infiniteScrollView)
+        infiniteScrollView.setTranslatesAutoresizingMaskIntoConstraints(false)
+        addConstraints([NSLayoutConstraint(item: self, attribute: NSLayoutAttribute.Top, relatedBy: NSLayoutRelation.Equal, toItem: infiniteScrollView, attribute: NSLayoutAttribute.Top, multiplier: 1, constant: 0), NSLayoutConstraint(item: self, attribute: NSLayoutAttribute.Right, relatedBy: NSLayoutRelation.Equal, toItem: infiniteScrollView, attribute: NSLayoutAttribute.Right, multiplier: 1, constant: 0), NSLayoutConstraint(item: self, attribute: NSLayoutAttribute.Bottom, relatedBy: NSLayoutRelation.Equal, toItem: infiniteScrollView, attribute: NSLayoutAttribute.Bottom, multiplier: 1, constant: 0), NSLayoutConstraint(item: self, attribute: NSLayoutAttribute.Left, relatedBy: NSLayoutRelation.Equal, toItem: infiniteScrollView, attribute: NSLayoutAttribute.Left, multiplier: 1, constant: 0)])
+        
+        // page control
+        pageControl.setTranslatesAutoresizingMaskIntoConstraints(false)
+        pageControl.numberOfPages = 4
+        pageControl.tintColor = UIColor.blackColor()
+        pageControl.pageIndicatorTintColor = UIColor.darkGrayColor()
+        pageControl.currentPageIndicatorTintColor = UIColor.lightGrayColor()
+        addSubview(pageControl)
+        pageControl.addConstraints([NSLayoutConstraint(item: pageControl, attribute: NSLayoutAttribute.Width, relatedBy: NSLayoutRelation.Equal, toItem: nil, attribute: NSLayoutAttribute.Width, multiplier: 1, constant: 100), NSLayoutConstraint(item: pageControl, attribute: NSLayoutAttribute.Height, relatedBy: NSLayoutRelation.Equal, toItem: nil, attribute: NSLayoutAttribute.Height, multiplier: 1, constant: 100)])
+        self.addConstraints([NSLayoutConstraint(item: self, attribute: NSLayoutAttribute.CenterX, relatedBy: NSLayoutRelation.Equal, toItem: pageControl, attribute: NSLayoutAttribute.CenterX, multiplier: 1, constant: 0), NSLayoutConstraint(item: self, attribute: NSLayoutAttribute.Bottom, relatedBy: NSLayoutRelation.Equal, toItem: pageControl, attribute: NSLayoutAttribute.Bottom, multiplier: 1, constant: 20)])
+        
+        pageControl.numberOfPages = 3
+    }
+    
+    func showCenterContainer() {
+        infiniteScrollView.showCenterContainer()
+    }
+    
+    func reloadData() {
+        infiniteScrollView.reloadData()
+        pageControl.numberOfPages = dataSource!.numberOfPages()
+        updatePageControl()
+    }
+    
+    // MARK: - Scroll view default methods
+    
+    func scrollViewDidEndDecelerating(scrollView: UIScrollView) {
+        updatePageControl()
+    }
+    
+    func updatePageControl() {
+        for container in infiniteScrollView.containers {
+            if container.frame.origin.x == infiniteScrollView.contentOffset.x {
+                pageControl.currentPage = dataSource!.currentIndex(container.index)
+            }
+        }
+    }
+    
+}
+
+// MARK: -
+
 class Container: UIView {
     
     let imageView = UIImageView(frame: CGRectZero)
@@ -32,10 +103,13 @@ class Container: UIView {
     }
 }
 
+// MARK: - Delegate Protocol
 // MARK: - 
 
 protocol InfiniteScrollViewDelegate {
     func imageForContainer(index: Int)->UIImage
+    func numberOfPages()->Int
+    func currentIndex(index: Int)->Int
 }
 
 // MARK: -
@@ -57,6 +131,16 @@ class InfiniteScrollView: UIScrollView {
     required init(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
         
+        baseConfiguration()
+    }
+    
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        
+        baseConfiguration()
+    }
+    
+    func baseConfiguration() {
         pagingEnabled = true
         showsHorizontalScrollIndicator = false
         showsVerticalScrollIndicator = false
@@ -78,6 +162,7 @@ class InfiniteScrollView: UIScrollView {
         for container in containers {
             container.imageView.image = dataSource?.imageForContainer(container.index)
         }
+        
     }
     
     // MARK: - Addition of containers

@@ -10,7 +10,7 @@ import UIKit
 
 class ViewController: UIViewController, InfiniteScrollViewDelegate {
     
-    @IBOutlet weak var infiniteScrollView: InfiniteScrollView!
+    @IBOutlet weak var infiniteScrollView: InfiniteScrollViewWithPageControll!
     var images = [UIImage]()
     
     override func viewDidLoad() {
@@ -33,9 +33,17 @@ class ViewController: UIViewController, InfiniteScrollViewDelegate {
     // MARK: - InfiniteScrollViewDelegate
     
     func imageForContainer(index: Int)->UIImage {
+        return images[currentIndex(index)]
+    }
+    
+    func numberOfPages()->Int {
+        return images.count
+    }
+    
+    func currentIndex(index: Int) -> Int {
         var i = index % images.count
         i = i < 0 ? images.count + i : i
-        return images[i]
+        return i
     }
     
 }
