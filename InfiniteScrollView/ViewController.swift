@@ -33,8 +33,8 @@ class ViewController: UIViewController, InfiniteScrollViewDelegate {
     // MARK: - InfiniteScrollViewDelegate
     
     func imageForContainer(index: Int)->UIImage {
-        let i = abs(index) % images.count
-        println("\(i)")
+        var i = index % images.count
+        i = i < 0 ? images.count + i : i
         return images[i]
     }
     

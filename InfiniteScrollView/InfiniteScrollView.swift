@@ -28,7 +28,6 @@ class Container: UIView {
         addSubview(imageView)
         imageView.setTranslatesAutoresizingMaskIntoConstraints(false)
         
-//        imageView.addConstraints([NSLayoutConstraint(item: imageView, attribute: NSLayoutAttribute.Width, relatedBy: NSLayoutRelation.Equal, toItem: nil, attribute: NSLayoutAttribute.Width, multiplier: 1, constant: 30), NSLayoutConstraint(item: imageView, attribute: NSLayoutAttribute.Height, relatedBy: NSLayoutRelation.Equal, toItem: nil, attribute: NSLayoutAttribute.Height, multiplier: 1, constant: 30)])
         addConstraints([NSLayoutConstraint(item: self, attribute: NSLayoutAttribute.Top, relatedBy: NSLayoutRelation.Equal, toItem: imageView, attribute: NSLayoutAttribute.Top, multiplier: 1, constant: 0), NSLayoutConstraint(item: self, attribute: NSLayoutAttribute.Bottom, relatedBy: NSLayoutRelation.Equal, toItem: imageView, attribute: NSLayoutAttribute.Bottom, multiplier: 1, constant: 0), NSLayoutConstraint(item: self, attribute: NSLayoutAttribute.Left, relatedBy: NSLayoutRelation.Equal, toItem: imageView, attribute: NSLayoutAttribute.Left, multiplier: 1, constant: 0), NSLayoutConstraint(item: self, attribute: NSLayoutAttribute.Right, relatedBy: NSLayoutRelation.Equal, toItem: imageView, attribute: NSLayoutAttribute.Right, multiplier: 1, constant: 0)])
     }
 }
@@ -47,7 +46,11 @@ class InfiniteScrollView: UIScrollView {
     var containers = [Container]()
     var centerConstraint = NSLayoutConstraint()
     var anchorView: UIView?
-    var dataSource: InfiniteScrollViewDelegate?
+    var dataSource: InfiniteScrollViewDelegate? {
+        didSet {
+            reloadData()
+        }
+    }
     
     // MARK: -
     
@@ -55,6 +58,8 @@ class InfiniteScrollView: UIScrollView {
         super.init(coder: aDecoder)
         
         pagingEnabled = true
+        showsHorizontalScrollIndicator = false
+        showsVerticalScrollIndicator = false
         
         self.addSubview(content)
         content.setTranslatesAutoresizingMaskIntoConstraints(false)
@@ -65,6 +70,14 @@ class InfiniteScrollView: UIScrollView {
         placeFirstContainer()
         placeNewContainerOnTheLeft()
         placeNewContainerOnTheRight()
+    }
+    
+    // MARK: - Content
+    
+    func reloadData() {
+        for container in containers {
+            container.imageView.image = dataSource?.imageForContainer(container.index)
+        }
     }
     
     // MARK: - Addition of containers
@@ -98,11 +111,8 @@ class InfiniteScrollView: UIScrollView {
     func addNewContainer(index: Int)->Container {
         let container = Container(frame: CGRectZero)
         container.index = index
-        println("index: \(index)")
         container.imageView.image = dataSource?.imageForContainer(index)
         container.imageView.contentMode = UIViewContentMode.ScaleAspectFit
-        container.layer.borderColor = UIColor.blackColor().CGColor
-        container.layer.borderWidth = 0.5
         content.addSubview(container)
         container.setTranslatesAutoresizingMaskIntoConstraints(false)
         
