@@ -28,6 +28,8 @@ class ViewController: UIViewController, InfiniteScrollViewDelegate {
         super.viewDidAppear(animated)
         
         infiniteScrollView.showCenterContainer()
+        
+        infiniteScrollView.startAutoscroll()
     }
     
     // MARK: - InfiniteScrollViewDelegate

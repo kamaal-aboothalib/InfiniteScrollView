@@ -8,7 +8,7 @@
 
 import UIKit
 
-class InfiniteScrollViewWithPageControll: UIView, UIScrollViewDelegate {
+class InfiniteScrollViewWithPageControll: UIView, UIScrollViewDelegate, QweDelegate {
     
     let infiniteScrollView = InfiniteScrollView(frame: CGRectZero)
     let pageControl = UIPageControl(frame: CGRectZero)
@@ -18,6 +18,8 @@ class InfiniteScrollViewWithPageControll: UIView, UIScrollViewDelegate {
             reloadData()
         }
     }
+    
+    // MARK: -
     
     required init(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
@@ -34,6 +36,7 @@ class InfiniteScrollViewWithPageControll: UIView, UIScrollViewDelegate {
     func baseConfiguration() {
         // scroll view
         infiniteScrollView.delegate = self
+        infiniteScrollView.qwe = self
         addSubview(infiniteScrollView)
         infiniteScrollView.setTranslatesAutoresizingMaskIntoConstraints(false)
         addConstraints([NSLayoutConstraint(item: self, attribute: NSLayoutAttribute.Top, relatedBy: NSLayoutRelation.Equal, toItem: infiniteScrollView, attribute: NSLayoutAttribute.Top, multiplier: 1, constant: 0), NSLayoutConstraint(item: self, attribute: NSLayoutAttribute.Right, relatedBy: NSLayoutRelation.Equal, toItem: infiniteScrollView, attribute: NSLayoutAttribute.Right, multiplier: 1, constant: 0), NSLayoutConstraint(item: self, attribute: NSLayoutAttribute.Bottom, relatedBy: NSLayoutRelation.Equal, toItem: infiniteScrollView, attribute: NSLayoutAttribute.Bottom, multiplier: 1, constant: 0), NSLayoutConstraint(item: self, attribute: NSLayoutAttribute.Left, relatedBy: NSLayoutRelation.Equal, toItem: infiniteScrollView, attribute: NSLayoutAttribute.Left, multiplier: 1, constant: 0)])
@@ -53,6 +56,7 @@ class InfiniteScrollViewWithPageControll: UIView, UIScrollViewDelegate {
     
     func showCenterContainer() {
         infiniteScrollView.showCenterContainer()
+        updatePageControl()
     }
     
     func reloadData() {
@@ -61,10 +65,20 @@ class InfiniteScrollViewWithPageControll: UIView, UIScrollViewDelegate {
         updatePageControl()
     }
     
+    func startAutoscroll() {
+        infiniteScrollView.startAutoscroll()
+    }
+    
     // MARK: - Scroll view default methods
     
     func scrollViewDidEndDecelerating(scrollView: UIScrollView) {
         updatePageControl()
+    }
+    func scrollViewDidEndDragging(scrollView: UIScrollView, willDecelerate decelerate: Bool) {
+        infiniteScrollView.autoscrollTimer = NSTimer.scheduledTimerWithTimeInterval(3.5, target: infiniteScrollView, selector: "scrollNext", userInfo: nil, repeats: true)
+    }
+    func scrollViewWillBeginDragging(scrollView: UIScrollView) {
+        infiniteScrollView.autoscrollTimer?.invalidate()
     }
     
     func updatePageControl() {
@@ -77,39 +91,10 @@ class InfiniteScrollViewWithPageControll: UIView, UIScrollViewDelegate {
     
 }
 
-// MARK: -
+// MARK: - qwe
 
-class Container: UIView {
-    
-    let imageView = UIImageView(frame: CGRectZero)
-    var index = 0
-    
-    // MARK: -
-    
-    required override init(frame: CGRect) {
-        super.init(frame: frame)
-        configure()
-    }
-    required init(coder aDecoder: NSCoder) {
-        super.init(coder: aDecoder)
-        configure()
-    }
-    
-    func configure() {
-        addSubview(imageView)
-        imageView.setTranslatesAutoresizingMaskIntoConstraints(false)
-        
-        addConstraints([NSLayoutConstraint(item: self, attribute: NSLayoutAttribute.Top, relatedBy: NSLayoutRelation.Equal, toItem: imageView, attribute: NSLayoutAttribute.Top, multiplier: 1, constant: 0), NSLayoutConstraint(item: self, attribute: NSLayoutAttribute.Bottom, relatedBy: NSLayoutRelation.Equal, toItem: imageView, attribute: NSLayoutAttribute.Bottom, multiplier: 1, constant: 0), NSLayoutConstraint(item: self, attribute: NSLayoutAttribute.Left, relatedBy: NSLayoutRelation.Equal, toItem: imageView, attribute: NSLayoutAttribute.Left, multiplier: 1, constant: 0), NSLayoutConstraint(item: self, attribute: NSLayoutAttribute.Right, relatedBy: NSLayoutRelation.Equal, toItem: imageView, attribute: NSLayoutAttribute.Right, multiplier: 1, constant: 0)])
-    }
-}
-
-// MARK: - Delegate Protocol
-// MARK: - 
-
-protocol InfiniteScrollViewDelegate {
-    func imageForContainer(index: Int)->UIImage
-    func numberOfPages()->Int
-    func currentIndex(index: Int)->Int
+protocol QweDelegate {
+    func updatePageControl()
 }
 
 // MARK: -
@@ -120,11 +105,14 @@ class InfiniteScrollView: UIScrollView {
     var containers = [Container]()
     var centerConstraint = NSLayoutConstraint()
     var anchorView: UIView?
+    var autoscrollTimer: NSTimer?
     var dataSource: InfiniteScrollViewDelegate? {
         didSet {
             reloadData()
         }
     }
+    var qwe: QweDelegate?
+    var scroll = true
     
     // MARK: -
     
@@ -180,6 +168,10 @@ class InfiniteScrollView: UIScrollView {
     func placeNewContainerOnTheLeft() {
         let container = addNewContainer(containers.first!.index-1)
         
+        var temp = containers.first!.frame
+        temp.origin.x -= frame.size.width
+        container.frame = temp
+        
         content.addConstraint(NSLayoutConstraint(item: container, attribute: NSLayoutAttribute.Right, relatedBy: NSLayoutRelation.Equal, toItem: containers.first, attribute: NSLayoutAttribute.Left, multiplier: 1, constant: 0))
         
         containers.insert(container, atIndex: 0)
@@ -187,6 +179,10 @@ class InfiniteScrollView: UIScrollView {
     
     func placeNewContainerOnTheRight() {
         let container = addNewContainer(containers.last!.index+1)
+        
+        var temp = containers.last!.frame
+        temp.origin.x += frame.size.width
+        container.frame = temp
         
         content.addConstraint(NSLayoutConstraint(item: container, attribute: NSLayoutAttribute.Left, relatedBy: NSLayoutRelation.Equal, toItem: containers.last, attribute: NSLayoutAttribute.Right, multiplier: 1, constant: 0))
         
@@ -205,6 +201,7 @@ class InfiniteScrollView: UIScrollView {
         content.addConstraints([NSLayoutConstraint(item: content, attribute: NSLayoutAttribute.Top, relatedBy: NSLayoutRelation.Equal, toItem: container, attribute: NSLayoutAttribute.Top, multiplier: 1, constant: 0), NSLayoutConstraint(item: content, attribute: NSLayoutAttribute.Bottom, relatedBy: NSLayoutRelation.Equal, toItem: container, attribute: NSLayoutAttribute.Bottom, multiplier: 1, constant: 0)])
         
         return container
+        
     }
     
     // MARK: - Laying out containers
@@ -230,64 +227,67 @@ class InfiniteScrollView: UIScrollView {
                 contentOffset.x = contentSize.width/2 - frame.size.width/2
                 centerConstraint.constant += y - contentOffset.x
             }
+            
+            content.layoutIfNeeded()
         }
+        
     }
     
     func tileContainers() {
-        //remove container
-        if let first = containers.first {
-            if contentOffset.x > first.frame.origin.x + 2*frame.size.width {
-                if containers.count > 1 {
-                    var newConstraint = centerConstraint
+        var i = 0
+        do {
+            i = 0
+            //remove container
+            if let first = containers.first {
+                if contentOffset.x > first.frame.origin.x + 2*frame.size.width {
+                    if containers.count > 1 {
+                        var newConstraint = centerConstraint
+                
+                        if first == anchorView {
+                            if containers.count > 1 {
+                                let second = containers[1]
+                                newConstraint = NSLayoutConstraint(item: content, attribute: NSLayoutAttribute.CenterX, relatedBy: NSLayoutRelation.Equal, toItem: second, attribute: NSLayoutAttribute.CenterX, multiplier: 1, constant: centerConstraint.constant-frame.size.width)
+                                anchorView = second
+                            }
+                        }
                     
-                    if first == anchorView {
-                        if containers.count > 1 {
-                            let second = containers[1]
-                            newConstraint = NSLayoutConstraint(item: content, attribute: NSLayoutAttribute.CenterX, relatedBy: NSLayoutRelation.Equal, toItem: second, attribute: NSLayoutAttribute.CenterX, multiplier: 1, constant: centerConstraint.constant-frame.size.width)
-                            anchorView = second
+                        content.removeConstraint(centerConstraint)
+                        centerConstraint = newConstraint
+                        content.addConstraint(centerConstraint)
+                    }
+                }
+            }
+            if let last = containers.last {
+                if contentOffset.x < last.frame.origin.x - 2*frame.size.width {
+                    if containers.count > 1 {
+                        if last == anchorView {
+                            if containers.count > 1 {
+                                let second = containers[containers.count - 2]
+            
+                                let newConstraint = NSLayoutConstraint(item: content, attribute: NSLayoutAttribute.CenterX, relatedBy: NSLayoutRelation.Equal, toItem: second, attribute: NSLayoutAttribute.CenterX, multiplier: 1, constant: centerConstraint.constant+frame.size.width)
+                                content.removeConstraint(centerConstraint)
+                                content.addConstraint(newConstraint)
+                                centerConstraint = newConstraint
+                                anchorView = second
+                            }
                         }
                     }
-                    
-                    content.removeConstraint(centerConstraint)
-                    centerConstraint = newConstraint
-                    content.addConstraint(centerConstraint)
-                    
-                    containers.removeAtIndex(0)
-                    first.removeFromSuperview()
                 }
             }
-        }
-        if let last = containers.last {
-            if contentOffset.x < last.frame.origin.x - 2*frame.size.width {
-                if containers.count > 1 {
-                    if last == anchorView {
-                        if containers.count > 1 {
-                            let second = containers[containers.count - 2]
-                            
-                            let newConstraint = NSLayoutConstraint(item: content, attribute: NSLayoutAttribute.CenterX, relatedBy: NSLayoutRelation.Equal, toItem: second, attribute: NSLayoutAttribute.CenterX, multiplier: 1, constant: centerConstraint.constant+frame.size.width)
-                            content.removeConstraint(centerConstraint)
-                            content.addConstraint(newConstraint)
-                            centerConstraint = newConstraint
-                            anchorView = second
-                        }
+            
+            // add new container
+            if let first = containers.first {
+                if contentOffset.x < first.frame.origin.x+frame.size.width {
+                    placeNewContainerOnTheLeft()
+                    i++
+                } else if let last = containers.last {
+                    if contentOffset.x > last.frame.origin.x-frame.size.width {
+                        placeNewContainerOnTheRight()
+                        i++
                     }
-                    
-                    containers.removeAtIndex(containers.count-1)
-                    last.removeFromSuperview()
                 }
             }
-        }
-
-        // add new container
-        if let first = containers.first {
-            if contentOffset.x < first.frame.origin.x+frame.size.width {
-                placeNewContainerOnTheLeft()
-            } else if let last = containers.last {
-                if contentOffset.x > last.frame.origin.x-frame.size.width {
-                    placeNewContainerOnTheRight()
-                }
-            }
-        }
+        } while i != 0
     }
     
     func showCenterContainer() {
@@ -297,5 +297,75 @@ class InfiniteScrollView: UIScrollView {
             contentOffset = CGPointMake(container.frame.origin.x, 0)
         }
     }
+
+    // MARK: - Autoscroll
     
+    func startAutoscroll() {
+        autoscrollTimer = NSTimer.scheduledTimerWithTimeInterval(3.5, target: self, selector: "scrollNext", userInfo: nil, repeats: true)
+    }
+    
+    func scrollNext() {
+        if scroll {
+            let currentOffset = contentOffset.x
+            let currentConstraint = centerConstraint.constant
+            
+            var newOffset = contentOffset.x + self.frame.size.width
+            var newConstraint = currentConstraint - self.frame.size.width
+            
+            contentOffset.x = newOffset
+            centerConstraint.constant = newConstraint
+            centerIfNeeded()
+            
+            if contentOffset.x == newOffset {
+                contentOffset.x = currentOffset
+                centerConstraint.constant = currentConstraint
+            } else {
+                tileContainers()
+                newOffset = contentOffset.x + frame.size.width
+            }
+            
+            UIView.animateWithDuration(0.7, animations: { () -> Void in
+                self.contentOffset.x = newOffset
+            }) { (complete: Bool) -> Void in
+                self.tileContainers()
+                self.qwe!.updatePageControl()
+            }
+        }
+    }
+    
+}
+
+// MARK: -
+
+class Container: UIView {
+    
+    let imageView = UIImageView(frame: CGRectZero)
+    var index = 0
+    
+    // MARK: -
+    
+    required override init(frame: CGRect) {
+        super.init(frame: frame)
+        configure()
+    }
+    required init(coder aDecoder: NSCoder) {
+        super.init(coder: aDecoder)
+        configure()
+    }
+    
+    func configure() {
+        addSubview(imageView)
+        imageView.setTranslatesAutoresizingMaskIntoConstraints(false)
+        
+        addConstraints([NSLayoutConstraint(item: self, attribute: NSLayoutAttribute.Top, relatedBy: NSLayoutRelation.Equal, toItem: imageView, attribute: NSLayoutAttribute.Top, multiplier: 1, constant: 0), NSLayoutConstraint(item: self, attribute: NSLayoutAttribute.Bottom, relatedBy: NSLayoutRelation.Equal, toItem: imageView, attribute: NSLayoutAttribute.Bottom, multiplier: 1, constant: 0), NSLayoutConstraint(item: self, attribute: NSLayoutAttribute.Left, relatedBy: NSLayoutRelation.Equal, toItem: imageView, attribute: NSLayoutAttribute.Left, multiplier: 1, constant: 0), NSLayoutConstraint(item: self, attribute: NSLayoutAttribute.Right, relatedBy: NSLayoutRelation.Equal, toItem: imageView, attribute: NSLayoutAttribute.Right, multiplier: 1, constant: 0)])
+    }
+}
+
+// MARK: - Delegate Protocol
+// MARK: -
+
+protocol InfiniteScrollViewDelegate {
+    func imageForContainer(index: Int)->UIImage
+    func numberOfPages()->Int
+    func currentIndex(index: Int)->Int
 }
