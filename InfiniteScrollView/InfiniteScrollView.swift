@@ -104,6 +104,7 @@ class InfiniteScrollView: UIScrollView {
     let content = UIView(frame: CGRectZero)
     var containers = [Container]()
     var centerConstraint = NSLayoutConstraint()
+    var contentWidthConstraint = NSLayoutConstraint()
     var anchorView: UIView?
     var autoscrollTimer: NSTimer?
     var dataSource: InfiniteScrollViewDelegate? {
@@ -137,11 +138,19 @@ class InfiniteScrollView: UIScrollView {
         content.setTranslatesAutoresizingMaskIntoConstraints(false)
         
         self.addConstraints([NSLayoutConstraint(item: self, attribute: NSLayoutAttribute.Left, relatedBy: NSLayoutRelation.Equal, toItem: content, attribute: NSLayoutAttribute.Left, multiplier: 1, constant: 0), NSLayoutConstraint(item: self, attribute: NSLayoutAttribute.Right, relatedBy: NSLayoutRelation.Equal, toItem: content, attribute: NSLayoutAttribute.Right, multiplier: 1, constant: 0), NSLayoutConstraint(item: self, attribute: NSLayoutAttribute.Top, relatedBy: NSLayoutRelation.Equal, toItem: content, attribute: NSLayoutAttribute.Top, multiplier: 1, constant: 0), NSLayoutConstraint(item: self, attribute: NSLayoutAttribute.Height, relatedBy: NSLayoutRelation.Equal, toItem: content, attribute: NSLayoutAttribute.Height, multiplier: 1, constant: 0)])
-        self.addConstraint(NSLayoutConstraint(item: content, attribute: NSLayoutAttribute.Width, relatedBy: NSLayoutRelation.Equal, toItem: self, attribute: NSLayoutAttribute.Width, multiplier: 9, constant: 0))
+        contentWidthConstraint = NSLayoutConstraint(item: content, attribute: NSLayoutAttribute.Width, relatedBy: NSLayoutRelation.Equal, toItem: self, attribute: NSLayoutAttribute.Width, multiplier: 9, constant: 0)
+        self.addConstraint(contentWidthConstraint)
         
         placeFirstContainer()
         placeNewContainerOnTheLeft()
         placeNewContainerOnTheRight()
+        
+        UIDevice.currentDevice().beginGeneratingDeviceOrientationNotifications()
+        NSNotificationCenter.defaultCenter().addObserver(self, selector: "orientationChanged", name: UIDeviceOrientationDidChangeNotification, object: nil)
+    }
+    
+    deinit {
+        NSNotificationCenter.defaultCenter().removeObserver(self)
     }
     
     // MARK: - Content
@@ -214,6 +223,12 @@ class InfiniteScrollView: UIScrollView {
         tileContainers()
     }
     
+    func orientationChanged() {
+        contentOffset.x = frame.size.width
+        centerConstraint.constant = 0
+
+    }
+    
     func centerIfNeeded() {
         let x = contentOffset.x + frame.size.width/2
         
@@ -227,11 +242,11 @@ class InfiniteScrollView: UIScrollView {
                 contentOffset.x = contentSize.width/2 - frame.size.width/2
                 centerConstraint.constant += y - contentOffset.x
             }
-            
             content.layoutIfNeeded()
-        }
-        
+        }        
     }
+    
+    var animation = false
     
     func tileContainers() {
         var i = 0
@@ -304,6 +319,8 @@ class InfiniteScrollView: UIScrollView {
         autoscrollTimer = NSTimer.scheduledTimerWithTimeInterval(3.5, target: self, selector: "scrollNext", userInfo: nil, repeats: true)
     }
     
+    var current = Container()
+    
     func scrollNext() {
         if scroll {
             let currentOffset = contentOffset.x
@@ -325,8 +342,10 @@ class InfiniteScrollView: UIScrollView {
             }
             
             UIView.animateWithDuration(0.7, animations: { () -> Void in
+                self.animation = true
                 self.contentOffset.x = newOffset
             }) { (complete: Bool) -> Void in
+                self.animation = false
                 self.tileContainers()
                 self.qwe!.updatePageControl()
             }
