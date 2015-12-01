@@ -11,6 +11,7 @@ import UIKit
 class AsyncViewController: UIViewController {
 
     @IBOutlet weak var isv: InfiniteScrollView!
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
