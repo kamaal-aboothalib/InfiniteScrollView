@@ -8,8 +8,6 @@
 
 import UIKit
 
-
-
 class SimpleViewController: UIViewController {
     
     @IBOutlet weak var infiniteScrollView: InfiniteScrollView!
