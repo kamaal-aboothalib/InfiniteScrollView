@@ -15,6 +15,7 @@ class InfiniteScrollView: UIScrollView, ContainerDelegate {
     static let primeContainer = Container(frame: CGRectZero) // base container to copy
     static var globalContainers = [Container]() // array for dequing containers
     var id: String?
+    var customContainer: UIView?
     let contentView = UIView(frame: CGRectZero)
     var subviewContainers = [Container]()
     var centerConstraint = NSLayoutConstraint()
@@ -40,7 +41,18 @@ class InfiniteScrollView: UIScrollView, ContainerDelegate {
     
     // MARK: - Static methods
     
-    class func dequeContainer(id: String?) -> Container {
+    func dequeContainer(id: String?) -> Container {
+        if let custom = customContainer {
+            for container in InfiniteScrollView.globalContainers {
+                if container.classForCoder == custom.classForCoder && container.superview == nil {
+                    return container
+                }
+            }
+            if let container = custom.copy() as? Container {
+                return container
+            }
+        }
+        
         for container in InfiniteScrollView.globalContainers {
             if container.id == id && container.superview == nil {
                 return container
@@ -140,7 +152,7 @@ class InfiniteScrollView: UIScrollView, ContainerDelegate {
     // MARK: - Adding containers
     
     func addNewContainer(index: Int)->Container {
-        let container =  InfiniteScrollView.dequeContainer(nil)
+        let container = dequeContainer(nil)
         container.itemHandlingBlock = itemHandlingBlock
         var tempRect = container.frame
         tempRect.origin.x = contentOffset.x
@@ -224,6 +236,7 @@ class InfiniteScrollView: UIScrollView, ContainerDelegate {
         for container in subviewContainers {
             container.updateContent()
             if pagingEnabled {
+                container.updateContent()
                 container.widthConstraint?.constant = widthForItem(container.item, self)
                 contentView.layoutIfNeeded()
             }
@@ -265,7 +278,6 @@ class InfiniteScrollView: UIScrollView, ContainerDelegate {
                     contentView.layoutIfNeeded()
                 }
                 contentWitdh = contentView.frame.size.width
-                print("rotated \(contentWitdh)")
                 rotated = false
             }
             

@@ -27,6 +27,9 @@
 		51D407E41C0D89BD00A9778E /* InfinityScrollView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51D407E01C0D89BD00A9778E /* InfinityScrollView.swift */; };
 		51D407E51C0D89BD00A9778E /* ISV+PageControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51D407E11C0D89BD00A9778E /* ISV+PageControl.swift */; };
 		51D407E61C0D89BD00A9778E /* Protocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51D407E21C0D89BD00A9778E /* Protocols.swift */; };
+		51D407EA1C0D8A6000A9778E /* Model.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51D407E91C0D8A6000A9778E /* Model.swift */; };
+		51D407ED1C0D960800A9778E /* AsyncContainer.xib in Resources */ = {isa = PBXBuildFile; fileRef = 51D407EC1C0D960800A9778E /* AsyncContainer.xib */; };
+		51D407EF1C0D961A00A9778E /* AsyncContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51D407EE1C0D961A00A9778E /* AsyncContainer.swift */; };
 		DD085BF81AE7E14700DDADB0 /* InfiniteScrollViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD085BF71AE7E14700DDADB0 /* InfiniteScrollViewTests.swift */; };
 /* End PBXBuildFile section */
 
@@ -62,6 +65,9 @@
 		51D407E01C0D89BD00A9778E /* InfinityScrollView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InfinityScrollView.swift; sourceTree = "<group>"; };
 		51D407E11C0D89BD00A9778E /* ISV+PageControl.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "ISV+PageControl.swift"; sourceTree = "<group>"; };
 		51D407E21C0D89BD00A9778E /* Protocols.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Protocols.swift; sourceTree = "<group>"; };
+		51D407E91C0D8A6000A9778E /* Model.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Model.swift; path = Model/Model.swift; sourceTree = "<group>"; };
+		51D407EC1C0D960800A9778E /* AsyncContainer.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = AsyncContainer.xib; path = View/AsyncContainer.xib; sourceTree = "<group>"; };
+		51D407EE1C0D961A00A9778E /* AsyncContainer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = AsyncContainer.swift; path = View/AsyncContainer.swift; sourceTree = "<group>"; };
 		DD085BDC1AE7E14700DDADB0 /* InfiniteScrollView.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = InfiniteScrollView.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		DD085BF11AE7E14700DDADB0 /* InfiniteScrollViewTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = InfiniteScrollViewTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		DD085BF61AE7E14700DDADB0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -92,6 +98,8 @@
 				51D407B81C0D88B200A9778E /* AppDelegate.swift */,
 				51D407BB1C0D88B200A9778E /* Main.storyboard */,
 				51D407BD1C0D88B200A9778E /* Controllers */,
+				51D407E81C0D8A4900A9778E /* Model */,
+				51D407EB1C0D95E500A9778E /* View */,
 				51D407DE1C0D89BD00A9778E /* InfiniteScrollView */,
 				51D407E71C0D89C800A9778E /* Other Sources */,
 			);
@@ -145,6 +153,23 @@
 				51D407C51C0D88B200A9778E /* png */,
 			);
 			name = "Other Sources";
+			sourceTree = "<group>";
+		};
+		51D407E81C0D8A4900A9778E /* Model */ = {
+			isa = PBXGroup;
+			children = (
+				51D407E91C0D8A6000A9778E /* Model.swift */,
+			);
+			name = Model;
+			sourceTree = "<group>";
+		};
+		51D407EB1C0D95E500A9778E /* View */ = {
+			isa = PBXGroup;
+			children = (
+				51D407EC1C0D960800A9778E /* AsyncContainer.xib */,
+				51D407EE1C0D961A00A9778E /* AsyncContainer.swift */,
+			);
+			name = View;
 			sourceTree = "<group>";
 		};
 		DD085BD31AE7E14700DDADB0 = {
@@ -271,6 +296,7 @@
 				51D407DA1C0D88B200A9778E /* 4.jpg in Resources */,
 				51D407D91C0D88B200A9778E /* 3.jpg in Resources */,
 				51D407D51C0D88B200A9778E /* Images.xcassets in Resources */,
+				51D407ED1C0D960800A9778E /* AsyncContainer.xib in Resources */,
 				51D407CE1C0D88B200A9778E /* LaunchScreen.xib in Resources */,
 				51D407D81C0D88B200A9778E /* 2.jpg in Resources */,
 				51D407D71C0D88B200A9778E /* 1.jpg in Resources */,
@@ -295,7 +321,9 @@
 				51D407E31C0D89BD00A9778E /* Container.swift in Sources */,
 				51D407D21C0D88B200A9778E /* PaginatedViewController.swift in Sources */,
 				51D407E61C0D89BD00A9778E /* Protocols.swift in Sources */,
+				51D407EF1C0D961A00A9778E /* AsyncContainer.swift in Sources */,
 				51D407E51C0D89BD00A9778E /* ISV+PageControl.swift in Sources */,
+				51D407EA1C0D8A6000A9778E /* Model.swift in Sources */,
 				51D407D11C0D88B200A9778E /* EmptyViewController.swift in Sources */,
 				51D407E41C0D89BD00A9778E /* InfinityScrollView.swift in Sources */,
 				51D407CD1C0D88B200A9778E /* AppDelegate.swift in Sources */,

@@ -26,6 +26,11 @@ class Container: UIView {
     
     // MARK: -
     
+    override func copy() -> AnyObject {
+        let  container = self.dynamicType.init(frame: frame)
+        return container
+    }
+    
     required override init(frame: CGRect) {
         super.init(frame: frame)
         configure()

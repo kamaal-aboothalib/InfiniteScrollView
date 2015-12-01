@@ -9,6 +9,7 @@
 import UIKit
 
 var images = [UIImage]()
+var models = [Model]()
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -22,6 +23,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             let image = UIImage(named: "\(i).jpg")
             images.append(image!)
         }
+        
+        let urls = ["http://dreamatico.com/data_images/kitten/kitten-1.jpg", "http://i.telegraph.co.uk/multimedia/archive/02830/cat_2830677b.jpg", "http://weknowyourdreams.com/image.php?pic=/images/kitten/kitten-09.jpg", "http://dreamatico.com/data_images/kitten/kitten-2.jpg", "https://pbs.twimg.com/profile_images/562466745340817408/_nIu8KHX.jpeg", "http://www.eastcottvets.co.uk/uploads/Animals/gingerkitten.jpg", "http://weknowyourdreams.com/image.php?pic=/images/kittens/kittens-06.jpg"]
+        
+        for i in 0...6 {
+            let model = Model()
+            model.url = urls[i]
+            models.append(model)
+        }
+        
         return true
     }
 
