@@ -18,7 +18,7 @@ class Container: UIView {
     var id: String?
 //    var delegate: ContainerDelegate?
     var action: ((Void)->(Void))?
-    var itemHandlingBlock: ((item: AnyObject?, container: Container)->(Void)) = { (item, container) in
+    var itemHandlingBlock: ItemHandlingBlock = { (item, container) in
         if let image = item as? UIImage {
             container.imageView.image = image
         }

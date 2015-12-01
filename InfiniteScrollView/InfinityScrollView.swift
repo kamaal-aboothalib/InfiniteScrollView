@@ -9,60 +9,57 @@
 import UIKit
 import AVFoundation
 
+typealias ItemHandlingBlock = (item: AnyObject?, container: Container)->(Void)
+
 class InfiniteScrollView: UIScrollView, ContainerDelegate {
     
     static var views = [InfiniteScrollView]() // all isv's for containers dequing (see deinit)
     static let primeContainer = Container(frame: CGRectZero) // base container to copy
     static var globalContainers = [Container]() // array for dequing containers
-    var id: String?
-    var customContainer: UIView?
+    
+    // subviews
     let contentView = UIView(frame: CGRectZero)
     var subviewContainers = [Container]()
-    var centerConstraint = NSLayoutConstraint()
-    var contentWidthConstraint = NSLayoutConstraint()
     var centerView: Container?
+    // constraints
+    var contentWidthConstraint = NSLayoutConstraint()
+    var centerConstraint = NSLayoutConstraint()
+    // properties
+    var customContainer: UIView?
     var centerIndex: Int? // maybe not neccessery
-    var autoscrollTimer: NSTimer?
-    var animation = false // support var for autoscroll method
-    var scroll = true // support variable for autoscrolling method
+    var id: String?
     var items: [AnyObject]?
-    var it = 0 // temp var for debugging
-    var itemHandlingBlock: ((item: AnyObject?, container: Container)->(Void)) = { (item, container) in
+    var itemHandlingBlock: ItemHandlingBlock = { (item, container) in
         if let item = item as? UIImage {
             container.imageView.image = item
         }
-    } {
+        } {
         didSet {
             for container in subviewContainers {
                 container.itemHandlingBlock = itemHandlingBlock
             }
         }
     }
+    var widthForItem: (AnyObject?, InfiniteScrollView) -> CGFloat = { item, isv in
+        if !isv.pagingEnabled {
+            if let image = item as? UIImage {
+                return AVMakeRectWithAspectRatioInsideRect(CGSizeMake(image.size.width, image.size.height), isv.bounds).size.width
+            }
+        }
+        return isv.bounds.size.width
+    }
+    // autoscrolling
+    var autoscrollTimer: NSTimer?
+    // support variables
+    var animation = false       // support variable for autoscrolling method
+    var scroll = true           // support variable for autoscrolling method
+    var rotated = false         // support variable for screen rotation handling
+    var contentWitdh: CGFloat?  // support variable for screen rotation handling
+    var it = 0                  // support variable for debugging
+    
+    
     
     // MARK: - Static methods
-    
-    func dequeContainer(id: String?) -> Container {
-        if let custom = customContainer {
-            for container in InfiniteScrollView.globalContainers {
-                if container.classForCoder == custom.classForCoder && container.superview == nil {
-                    return container
-                }
-            }
-            if let container = custom.copy() as? Container {
-                return container
-            }
-        }
-        
-        for container in InfiniteScrollView.globalContainers {
-            if container.id == id && container.superview == nil {
-                return container
-            }
-        }
-        
-        let container = Container(frame: CGRectZero)
-        container.id = id
-        return container
-    }
     
     class func willDestroy(isv: InfiniteScrollView) {
         if let ind = views.indexOf(isv) {
@@ -90,13 +87,19 @@ class InfiniteScrollView: UIScrollView, ContainerDelegate {
     }
     
     // MARK: - Initializations
+    
     required init(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)!
         baseConfiguration()
     }
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
         baseConfiguration()
+    }
+    
+    deinit {
+        InfiniteScrollView.willDestroy(self)
     }
     
     // configuration
@@ -104,29 +107,32 @@ class InfiniteScrollView: UIScrollView, ContainerDelegate {
         addObserver(self, forKeyPath: "contentSize", options: NSKeyValueObservingOptions.New, context: nil)
         layer.masksToBounds = true
         InfiniteScrollView.views.append(self)
+        
         // appearance
         showsHorizontalScrollIndicator = false
         showsVerticalScrollIndicator = false
         backgroundColor = UIColor.clearColor()
         
         // content container subview
-        self.addSubview(contentView)
+        addSubview(contentView)
         contentView.translatesAutoresizingMaskIntoConstraints = false
         // constraints for content view
-        self.addConstraints([
-            NSLayoutConstraint(item: self, attribute: NSLayoutAttribute.Left, relatedBy: NSLayoutRelation.Equal, toItem: contentView, attribute: NSLayoutAttribute.Left, multiplier: 1, constant: 0),
-            NSLayoutConstraint(item: self, attribute: NSLayoutAttribute.Right, relatedBy: NSLayoutRelation.Equal, toItem: contentView, attribute: NSLayoutAttribute.Right, multiplier: 1, constant: 0),
-            NSLayoutConstraint(item: self, attribute: NSLayoutAttribute.Top, relatedBy: NSLayoutRelation.Equal, toItem: contentView, attribute: NSLayoutAttribute.Top, multiplier: 1, constant: 0),
-            NSLayoutConstraint(item: self, attribute: NSLayoutAttribute.Height, relatedBy: NSLayoutRelation.Equal, toItem: contentView, attribute: NSLayoutAttribute.Height, multiplier: 1, constant: 0)
+        addConstraints([
+            NSLayoutConstraint(item: self, attribute: .Left, relatedBy: .Equal, toItem: contentView, attribute: .Left, multiplier: 1, constant: 0),
+            NSLayoutConstraint(item: self, attribute: .Right, relatedBy: .Equal, toItem: contentView, attribute: .Right, multiplier: 1, constant: 0),
+            NSLayoutConstraint(item: self, attribute: .Top, relatedBy: .Equal, toItem: contentView, attribute: .Top, multiplier: 1, constant: 0),
+            NSLayoutConstraint(item: contentView, attribute: .Height, relatedBy: .Equal, toItem: self, attribute: .Height, multiplier: 1, constant: 0)
         ])
         contentWidthConstraint = NSLayoutConstraint(item: contentView, attribute: NSLayoutAttribute.Width, relatedBy: NSLayoutRelation.Equal, toItem: self, attribute: NSLayoutAttribute.Width, multiplier: 9, constant: 0)
         self.addConstraint(contentWidthConstraint)
         
+        // screen rotation support
         UIDevice.currentDevice().beginGeneratingDeviceOrientationNotifications()
         NSNotificationCenter.defaultCenter().addObserver(self, selector: "didRotate:", name: UIDeviceOrientationDidChangeNotification, object: nil)
     }
     
-    var rotated = false
+    // MARK: - Screen rotation handling
+    
     override func observeValueForKeyPath(keyPath: String?, ofObject object: AnyObject?, change: [String : AnyObject]?, context: UnsafeMutablePointer<Void>) {
         rotated = true
     }
@@ -134,12 +140,8 @@ class InfiniteScrollView: UIScrollView, ContainerDelegate {
     func didRotate(notification: NSNotification) {
         rotated = false
     }
-
-    deinit {
-        InfiniteScrollView.willDestroy(self)
-    }
     
-    // MARK: Delegate methods
+    // MARK: - Selection handling
     
     func containerSelected(container: Container) {
         
@@ -150,6 +152,29 @@ class InfiniteScrollView: UIScrollView, ContainerDelegate {
     }
     
     // MARK: - Adding containers
+    
+    func dequeContainer(id: String?) -> Container {
+        if let custom = customContainer {
+            for container in InfiniteScrollView.globalContainers {
+                if container.classForCoder == custom.classForCoder && container.superview == nil {
+                    return container
+                }
+            }
+            if let container = custom.copy() as? Container {
+                return container
+            }
+        }
+        
+        for container in InfiniteScrollView.globalContainers {
+            if container.id == id && container.superview == nil {
+                return container
+            }
+        }
+        
+        let container = Container(frame: CGRectZero)
+        container.id = id
+        return container
+    }
     
     func addNewContainer(index: Int)->Container {
         let container = dequeContainer(nil)
@@ -223,15 +248,6 @@ class InfiniteScrollView: UIScrollView, ContainerDelegate {
     
     // MARK: - Support methods
     
-    var widthForItem: (AnyObject?, InfiniteScrollView) -> CGFloat = { item, isv in
-        if !isv.pagingEnabled {
-            if let image = item as? UIImage {
-                return AVMakeRectWithAspectRatioInsideRect(CGSizeMake(image.size.width, image.size.height), isv.bounds).size.width
-            }
-        }
-        return isv.bounds.size.width
-    }
-
     func reloadData() {
         for container in subviewContainers {
             container.updateContent()
@@ -264,7 +280,6 @@ class InfiniteScrollView: UIScrollView, ContainerDelegate {
         tileContainers()
     }
     
-    var contentWitdh: CGFloat? // support variable for display rotation handling
     func tileContainers() {
         if items != nil && items!.count > 0 {
             if rotated && subviewContainers.count > 0 {
@@ -355,6 +370,21 @@ class InfiniteScrollView: UIScrollView, ContainerDelegate {
                     }
                 }
             }
+            
+//            if showPageControl {
+//                if let cv = centerView {
+//                    if cv.frame.origin.x == contentOffset.x {
+//                        for (index, item) in items!.enumerate() {
+//                            if let i1 = item as? NSObject, i2 = cv.item as? NSObject {
+//                                if i1 == i2 {
+//                                    pageControl.currentPage = index
+//                                    break
+//                                }
+//                            }
+//                        }
+//                    }
+//                }
+//            }
         }
     }
     
